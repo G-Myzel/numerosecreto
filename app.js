@@ -1,73 +1,67 @@
-let listaDeNumerosSorteados = [];
-let numeroLimite = 10;
-let numeroSecreto = gerarNumeroAleatorio();
-let tentativas = 1;
+(() => {
+    const limite = 10;
+    const campo = document.querySelector("#guess");
+    const formulario = document.querySelector("#guess-form");
+    const mensagem = document.querySelector("#mensagem");
+    const botaoReiniciar = document.querySelector("#reiniciar");
 
-function exibirTextoNaTela(tag, texto) {
-    let campo = document.querySelector(tag);
-    campo.innerHTML = texto;
-    responsiveVoice.speak(texto, 'Brazilian Portuguese Female', {rate:1.2});
-}
+    let numeroSecreto;
+    let tentativas;
+    let numerosSorteados = [];
 
-function exibirMensagemInicial() {
-    exibirTextoNaTela('h1', 'Jogo do número secreto');
-    exibirTextoNaTela('p', 'Escolha um número entre 1 e 10');
-}
-
-exibirMensagemInicial();
-
-function verificarChute() {
-    let chute = document.querySelector('input').value;
-    
-    if (chute == numeroSecreto) {
-        exibirTextoNaTela('h1', 'Acertou!');
-        let palavraTentativa = tentativas > 1 ? 'tentativas' : 'tentativa';
-        let mensagemTentativas = `Você descobriu o número secreto com ${tentativas} ${palavraTentativa}!`;
-        exibirTextoNaTela('p', mensagemTentativas);
-        document.getElementById('reiniciar').removeAttribute('disabled');
-    } else {
-        if (chute > numeroSecreto) {
-            exibirTextoNaTela('p', 'O número secreto é menor');
-        } else {
-            exibirTextoNaTela('p', 'O número secreto é maior');
+    function sortearNumero() {
+        if (numerosSorteados.length === limite) {
+            numerosSorteados = [];
         }
-        tentativas++;
-        limparCampo();
+
+        let numero;
+        do {
+            numero = Math.floor(Math.random() * limite) + 1;
+        } while (numerosSorteados.includes(numero));
+
+        numerosSorteados.push(numero);
+        return numero;
     }
-}
 
-function gerarNumeroAleatorio() {
-    let numeroEscolhido = parseInt(Math.random() * numeroLimite + 1);
-    let quantidadeDeElementosNaLista = listaDeNumerosSorteados.length;
-
-    if (quantidadeDeElementosNaLista == numeroLimite) {
-        listaDeNumerosSorteados = [];
+    function iniciarJogo() {
+        numeroSecreto = sortearNumero();
+        tentativas = 1;
+        campo.value = "";
+        campo.disabled = false;
+        formulario.querySelector('button[type="submit"]').disabled = false;
+        botaoReiniciar.disabled = true;
+        mensagem.textContent = "Escolha um número entre 1 e 10.";
+        campo.focus();
     }
-    if (listaDeNumerosSorteados.includes(numeroEscolhido)) {
-        return gerarNumeroAleatorio();
-    } else {
-        listaDeNumerosSorteados.push(numeroEscolhido);
-        console.log(listaDeNumerosSorteados)
-        return numeroEscolhido;
-    }
-}
 
-function limparCampo() {
-    chute = document.querySelector('input');
-    chute.value = '';
-}
+    formulario.addEventListener("submit", (evento) => {
+        evento.preventDefault();
+        const palpite = Number(campo.value);
 
-function reiniciarJogo() {
-    numeroSecreto = gerarNumeroAleatorio();
-    limparCampo();
-    tentativas = 1;
-    exibirMensagemInicial();
-    document.getElementById('reiniciar').setAttribute('disabled', true)
-}
+        if (!Number.isInteger(palpite) || palpite < 1 || palpite > limite) {
+            mensagem.textContent = "Digite um número inteiro entre 1 e 10.";
+            campo.focus();
+            return;
+        }
 
+        if (palpite === numeroSecreto) {
+            const palavra = tentativas === 1 ? "tentativa" : "tentativas";
+            mensagem.textContent = `Acertou em ${tentativas} ${palavra}! O número era ${numeroSecreto}.`;
+            campo.disabled = true;
+            formulario.querySelector('button[type="submit"]').disabled = true;
+            botaoReiniciar.disabled = false;
+            botaoReiniciar.focus();
+            return;
+        }
 
+        mensagem.textContent = palpite > numeroSecreto
+            ? "O número secreto é menor."
+            : "O número secreto é maior.";
+        tentativas += 1;
+        campo.value = "";
+        campo.focus();
+    });
 
-
-
-
-
+    botaoReiniciar.addEventListener("click", iniciarJogo);
+    iniciarJogo();
+})();
